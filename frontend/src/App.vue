@@ -1,85 +1,64 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import { RouterView, RouterLink } from 'vue-router'
 </script>
 
 <template>
   <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
+    <nav class="navbar">
+      <h2>✈️ E-Chronometraż</h2>
+      
+      <div class="nav-links">
+        <RouterLink to="/">Logowanie</RouterLink>
+        <RouterLink to="/pilot">Panel Pilota</RouterLink>
+      </div>
+    </nav>
   </header>
 
-  <RouterView />
+  <RouterView /> 
 </template>
 
-<style scoped>
+<style>
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background-color: #f9fafb;
+}
+
 header {
-  line-height: 1.5;
-  max-height: 100vh;
+  background-color: #1e293b;
+  color: white;
+  padding: 1rem 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+nav h2 {
+  margin: 0;
+  font-size: 1.5rem;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+.nav-links {
+  display: flex;
+  gap: 20px; /* Tworzy równe odstępy między linkami */
 }
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
+.nav-links a {
+  color: white; /* Zmienia kolor linków na biały */
+  text-decoration: none;
+  font-weight: bold;
 }
 
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
+.nav-links a:hover {
+  text-decoration: underline;
 }
 
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+.nav-links a.router-link-exact-active {
+  color: #60a5fa; 
 }
 </style>
