@@ -1,19 +1,27 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
+const auth = useAuthStore()
+
 const username = ref('')
 const password = ref('')
 
 const handleLogin = () => {
-  // Na etapie MVP po prostu symulujemy logowanie
   if (username.value && password.value) {
-    alert(`Witaj, ${username.value}! Trwa logowanie...`)
-    // Przekierowanie do panelu pilota
-    router.push('/pilot')
-  } else {
-    alert('Proszę podać login i hasło.')
+    // Prosta logika ról dla testów
+    const role = password.value === 'admin' ? 'admin' : 'pilot'
+    auth.login(username.value, role)
+    
+    alert(`Zalogowano jako ${auth.user?.name} (Rola: ${role})`)
+    
+    if (role === 'admin') {
+      router.push('/admin')
+    } else {
+      router.push('/pilot')
+    }
   }
 }
 </script>
