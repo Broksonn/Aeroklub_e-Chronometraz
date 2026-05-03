@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "model": "Cessna 152",
+    "registration": "SP-KIF",
+    "pricePerMinute": 15.50,
+    "status": "Dostępny"
+  },
+  {
+    "id": 2,
+    "model": "Piper Cub",
+    "registration": "SP-LOT",
+    "pricePerMinute": 12.00,
+    "status": "W przeglądzie"
+  },
+  {
+    "id": 3,
+    "model": "Cessna 172",
+    "registration": "SP-WAW",
+    "pricePerMinute": 18.00,
+    "status": "Dostępny"
+  }
+]
