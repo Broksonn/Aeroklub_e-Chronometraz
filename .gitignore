@@ -32,13 +32,12 @@ pnpm-debug.log*
 
 # =========================
 # Backend: Go
-# =========================
-# pliki bin
-/backend/main
-/backend/main.exe
-/backend/aeroklub-backend
-/backend/aeroklub-backend.exe
+# ========================= 
 *.exe
+*.exe~
+*.dll
+*.so
+*.dylib
 
 go.work
 go.work.sum
