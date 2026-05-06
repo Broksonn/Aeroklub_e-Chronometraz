@@ -1,14 +1,45 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import mockAirplanes from '../data/mockAirplanes.json'
+import { onMounted } from 'vue'
+import { useAirplanesStore } from '@/stores/airplanes'
+import { useAuthStore } from '@/stores/auth'
 
-const airplanes = ref([...mockAirplanes])
+const airplanesStore = useAirplanesStore()
+const authStore = useAuthStore()
 
-const updatePrice = (id: number, newPrice: number) => {
-  const plane = airplanes.value.find(p => p.id === id)
-  if (plane) {
-    plane.pricePerMinute = newPrice
-    console.log(`System: Zaktualizowano stawkę dla ${plane.registration}`)
+onMounted(() => {
+  airplanesStore.fetchAirplanes()
+})
+
+const updatePrice = async () => {
+  const uniqueTypes = new Map()
+  for (const p of airplanesStore.airplanes) {
+    uniqueTypes.set(p.model, p.pricePerMinute)
+  }
+
+  const payload = Array.from(uniqueTypes.entries()).map(([type, price]) => ({
+    type: type,
+    pricePerMinute: price
+  }))
+
+  try {
+    const response = await fetch('http://localhost:8080/api/pricing', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authStore.token}`
+      },
+      body: JSON.stringify(payload)
+    })
+
+    if (response.ok) {
+      alert('Ceny zostały zaktualizowane pomyślnie!')
+      airplanesStore.fetchAirplanes()
+    } else {
+      alert('Błąd podczas aktualizacji cen.')
+    }
+  } catch (err) {
+    console.error(err)
+    alert('Wystąpił błąd sieci.')
   }
 }
 </script>
@@ -22,7 +53,7 @@ const updatePrice = (id: number, newPrice: number) => {
       </div>
       <div class="header-stats">
         <span class="stat-label">Statki w systemie:</span>
-        <span class="stat-value">{{ airplanes.length }}</span>
+        <span class="stat-value">{{ airplanesStore.airplanes.length }}</span>
       </div>
     </header>
 
@@ -37,7 +68,7 @@ const updatePrice = (id: number, newPrice: number) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="plane in airplanes" :key="plane.id">
+          <tr v-for="plane in airplanesStore.airplanes" :key="plane.id">
             <td class="model-cell">{{ plane.model }}</td>
             <td><span class="reg-tag">{{ plane.registration }}</span></td>
             <td>
@@ -47,7 +78,7 @@ const updatePrice = (id: number, newPrice: number) => {
               </div>
             </td>
             <td class="text-right">
-              <button @click="updatePrice(plane.id, plane.pricePerMinute)" class="save-btn">Zapisz</button>
+              <button @click="updatePrice()" class="save-btn">Zapisz</button>
             </td>
           </tr>
         </tbody>
