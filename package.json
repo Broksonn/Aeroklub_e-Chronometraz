@@ -1,0 +1,24 @@
+{
+  "name": "aeroklub_e-chronometraz",
+  "version": "1.0.0",
+  "description": "Nie pracuj na `main`.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently -c \"blue.bold,green.bold\" -n \"BACKEND,FRONTEND\" \"cd backend && go run cmd/api/main.go\" \"cd frontend && npm run dev\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PWr-ISK-collaborative-project/Aeroklub_e-Chronometraz.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/PWr-ISK-collaborative-project/Aeroklub_e-Chronometraz/issues"
+  },
+  "homepage": "https://github.com/PWr-ISK-collaborative-project/Aeroklub_e-Chronometraz#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
