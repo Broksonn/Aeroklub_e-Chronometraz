@@ -9,15 +9,18 @@ const auth = useAuthStore()
 const username = ref('')
 const password = ref('')
 
-const handleLogin = () => {
+const handleLogin = async () => {
   if (username.value && password.value) {
-    const role = password.value === 'admin' ? 'admin' : 'pilot'
-    auth.login(username.value, role)
+    const success = await auth.login(username.value, password.value)
     
-    if (role === 'admin') {
-      router.push('/admin')
+    if (success) {
+      if (auth.user?.role === 'admin') {
+        router.push('/admin')
+      } else {
+        router.push('/pilot')
+      }
     } else {
-      router.push('/pilot')
+      alert('Błąd logowania. Sprawdź login i hasło.')
     }
   }
 }

@@ -11,26 +11,27 @@ import (
 )
 
 func main() {
-	// 1. Подключаемся к БД и запускаем миграции + сидер
+	// 1. Łączymy się z bazą danych i uruchamiamy migracje + seeder
 	database.ConnectDB()
 
-	// 2. Инициализируем роутер Gin
+	// 2. Inicjalizujemy router Gin
 	r := gin.Default()
 
-	// 3. Настройка CORS для связи с фронтом Vue (Vite обычно на порту 5173)
+	// 3. Konfiguracja CORS do komunikacji z frontendem Vue (Vite zazwyczaj na porcie 5173)
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://127.0.0.1:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
 
-	// 4. Подключаем маршруты
+	// 4. Podłączamy trasy
 	routes.SetupRoutes(r)
 
-	// 5. Запуск сервера
-	log.Println("Бэкенд запущен на http://localhost:8080")
+	// 5. Uruchomienie serwera
+	log.Println("Backend uruchomiony na http://localhost:8080")
 	if err := r.Run(":8080"); err != nil {
-		log.Fatal("Ошибка при запуске сервера: ", err)
+		log.Fatal("Blad podczas uruchamiania serwera: ", err)
 	}
 }
