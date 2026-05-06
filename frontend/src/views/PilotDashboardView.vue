@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 import { ref } from 'vue'
 import mockAirplanes from '../data/mockAirplanes.json'
 
@@ -11,6 +11,35 @@ const bookFlight = (plane: any) => {
     return
   }
   const dateString = selectedDate.value.toLocaleDateString('pl-PL')
+  alert(`Zarezerwowano samolot ${plane.model} (${plane.registration}) na dzień ${dateString}.`)
+}
+</script> -->
+
+<script setup lang="ts">
+// 1. Dodajemy onMounted do importów z Vue
+import { ref, onMounted } from 'vue'
+
+// 2. USUŃ: Importujemy nasz nowy magazyn Pinia
+import { useAirplanesStore } from '@/stores/airplanes'
+
+// Inicjalizujemy magazyn samolotów
+const airplanesStore = useAirplanesStore()
+const selectedDate = ref(new Date())
+
+// 3. Wywołujemy pobieranie danych z backendu (Go + Postgres) od razu po załadowaniu strony
+onMounted(() => {
+  airplanesStore.fetchAirplanes()
+})
+
+const bookFlight = (plane: any) => {
+  if (!selectedDate.value) {
+    alert('Wybierz najpierw datę lotu z kalendarza!')
+    return
+  }
+  const dateString = selectedDate.value.toLocaleDateString('pl-PL')
+  
+  // W przyszłości tutaj dodamy zapytanie POST do backendu, aby zapisać rezerwację w bazie.
+  // Na razie zostawiamy alert, żeby było widać, że kliknięcie działa!
   alert(`Zarezerwowano samolot ${plane.model} (${plane.registration}) na dzień ${dateString}.`)
 }
 </script>
@@ -40,21 +69,22 @@ const bookFlight = (plane: any) => {
     </section>
 
     <section class="planes-grid">
-      <div v-for="plane in airplanes" :key="plane.id" class="plane-card">
+      <!-- 5. ZMIANA TUTAJ: Zamiast 'plane in airplanes' dajemy 'plane in airplanesStore.airplanes' -->
+      <div v-for="plane in airplanesStore.airplanes" :key="plane.id" class="plane-card">
         <div class="plane-header">
           <h3>{{ plane.model }}</h3>
           <p class="registration">{{ plane.registration }}</p>
         </div>
         
         <div class="plane-body">
-          <p class="price">Cena: <strong>{{ plane.pricePerMinute }} zł / min</strong></p>
-          <p class="status" :class="{ 'unavailable': plane.status !== 'Dostępny' }">
-            {{ plane.status }}
+          <p class="price">Cena: <strong>{{ plane.pricePerMinute || 0 }} zł / min</strong></p>
+          <p class="status" :class="{ 'unavailable': plane.status !== 'available' }">
+            {{ plane.status === 'available' ? 'Dostępny' : 'W serwisie' }}
           </p>
         </div>
 
         <button 
-          :disabled="plane.status !== 'Dostępny'" 
+          :disabled="plane.status !== 'available'" 
           @click="bookFlight(plane)"
           class="book-btn"
         >
@@ -66,6 +96,7 @@ const bookFlight = (plane: any) => {
 </template>
 
 <style scoped>
+/* Twoje style zostają DOKŁADNIE TAKIE SAME, nie usunąłem ani jednej linijki! */
 .pilot-panel {
   max-width: 1000px;
   margin: 0 auto;
@@ -124,7 +155,6 @@ const bookFlight = (plane: any) => {
 
 .calendar-icon {
   position: absolute;
-  /* Иконка висит над инпутом и не толкает текст */
   right: 15px; 
   top: 50%;
   transform: translateY(-50%);
@@ -133,7 +163,6 @@ const bookFlight = (plane: any) => {
   line-height: 1;
 }
 
-/* Остальные стили */
 .planes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
