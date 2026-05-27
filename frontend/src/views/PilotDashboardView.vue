@@ -1,32 +1,12 @@
-<!-- <script setup lang="ts">
-import { ref } from 'vue'
-import mockAirplanes from '../data/mockAirplanes.json'
-
-const airplanes = ref(mockAirplanes)
-const selectedDate = ref(new Date())
-
-const bookFlight = (plane: any) => {
-  if (!selectedDate.value) {
-    alert('Wybierz najpierw datę lotu z kalendarza!')
-    return
-  }
-  const dateString = selectedDate.value.toLocaleDateString('pl-PL')
-  alert(`Zarezerwowano samolot ${plane.model} (${plane.registration}) na dzień ${dateString}.`)
-}
-</script> -->
-
 <script setup lang="ts">
-// 1. Dodajemy onMounted do importów z Vue
 import { ref, onMounted } from 'vue'
-
-// 2. USUŃ: Importujemy nasz nowy magazyn Pinia
 import { useAirplanesStore } from '@/stores/airplanes'
+// 1. IMPORTUJEMY WIDŻET POGODOWY
+import WeatherWidget from '../components/WeatherWidget.vue'
 
-// Inicjalizujemy magazyn samolotów
 const airplanesStore = useAirplanesStore()
 const selectedDate = ref(new Date())
 
-// 3. Wywołujemy pobieranie danych z backendu (Go + Postgres) od razu po załadowaniu strony
 onMounted(() => {
   airplanesStore.fetchAirplanes()
 })
@@ -37,9 +17,6 @@ const bookFlight = (plane: any) => {
     return
   }
   const dateString = selectedDate.value.toLocaleDateString('pl-PL')
-  
-  // W przyszłości tutaj dodamy zapytanie POST do backendu, aby zapisać rezerwację w bazie.
-  // Na razie zostawiamy alert, żeby było widać, że kliknięcie działa!
   alert(`Zarezerwowano samolot ${plane.model} (${plane.registration}) na dzień ${dateString}.`)
 }
 </script>
@@ -68,8 +45,9 @@ const bookFlight = (plane: any) => {
       </div>
     </section>
 
+    <WeatherWidget />
+
     <section class="planes-grid">
-      <!-- 5. ZMIANA TUTAJ: Zamiast 'plane in airplanes' dajemy 'plane in airplanesStore.airplanes' -->
       <div v-for="plane in airplanesStore.airplanes" :key="plane.id" class="plane-card">
         <div class="plane-header">
           <h3>{{ plane.model }}</h3>
