@@ -5,4 +5,6 @@ type Airplane struct {
 	Model        string `json:"model"`
 	Registration string `json:"registration"`
 	Status       string `json:"status"` // 'available', 'maintenance'
+	PriceID      uint   `json:"price_id"`
+	Price        Price  `json:"price" gorm:"foreignKey:PriceID"`
 }
