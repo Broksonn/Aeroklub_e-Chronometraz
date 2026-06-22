@@ -2,171 +2,127 @@
 import { ref } from 'vue'
 import mockAirplanes from '../data/mockAirplanes.json'
 
-const airplanes = ref([...mockAirplanes])
+const activeTab = ref('fleet') 
+const showPlaneModal = ref(false)
+const showUserModal = ref(false)
 
-const updatePrice = (id: number, newPrice: number) => {
-  const plane = airplanes.value.find(p => p.id === id)
-  if (plane) {
-    plane.pricePerMinute = newPrice
-    console.log(`System: Zaktualizowano stawkę dla ${plane.registration}`)
-  }
+const airplanes = ref([...mockAirplanes])
+const users = ref([
+  { id: 1, name: 'Jan Kowalski', role: 'admin' },
+  { id: 2, name: 'Marek Nowak', role: 'pilot' }
+])
+
+const newPlane = ref({ model: '', registration: '', pricePerMinute: 0 })
+const newUser = ref({ name: '', role: 'user' })
+
+const addPlane = () => {
+  if (!newPlane.value.model || !newPlane.value.registration) return
+  airplanes.value.push({ id: Date.now(), ...newPlane.value })
+  newPlane.value = { model: '', registration: '', pricePerMinute: 0 }
+  showPlaneModal.value = false
+}
+
+const addUser = () => {
+  if (!newUser.value.name) return
+  users.value.push({ id: Date.now(), ...newUser.value })
+  newUser.value = { name: '', role: 'user' }
+  showUserModal.value = false
+}
+
+const removePlane = (id: number) => {
+  airplanes.value = airplanes.value.filter(p => p.id !== id)
+}
+
+const removeUser = (id: number) => {
+  users.value = users.value.filter(u => u.id !== id)
 }
 </script>
 
 <template>
   <main class="admin-panel">
-    <header class="admin-header">
-      <div class="header-content">
-        <h1>Zarządzanie Flotą</h1>
-        <p>Panel administracyjny stawek operacyjnych</p>
-      </div>
-      <div class="header-stats">
-        <span class="stat-label">Statki w systemie:</span>
-        <span class="stat-value">{{ airplanes.length }}</span>
-      </div>
-    </header>
+    <div class="tabs">
+      <button @click="activeTab = 'fleet'" :class="{ active: activeTab === 'fleet' }">Flota</button>
+      <button @click="activeTab = 'users'" :class="{ active: activeTab === 'users' }">Użytkownicy</button>
+    </div>
 
-    <div class="table-container">
+    <div v-if="activeTab === 'fleet'" class="table-container">
+      <div class="actions-bar">
+        <button @click="showPlaneModal = true" class="add-btn">+ Dodaj statek</button>
+      </div>
       <table>
-        <thead>
-          <tr>
-            <th>Model statku</th>
-            <th>Znak rejestracyjny</th>
-            <th>Stawka (PLN/min)</th>
-            <th class="text-right">Zarządzanie</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Model statku</th><th>Rejestracja</th><th>Stawka</th><th class="text-right">Akcje</th></tr></thead>
         <tbody>
           <tr v-for="plane in airplanes" :key="plane.id">
-            <td class="model-cell">{{ plane.model }}</td>
+            <td>{{ plane.model }}</td>
             <td><span class="reg-tag">{{ plane.registration }}</span></td>
-            <td>
-              <div class="price-input-group">
-                <input type="number" v-model.number="plane.pricePerMinute" step="0.1" min="0" />
-                <span class="currency">PLN</span>
-              </div>
-            </td>
-            <td class="text-right">
-              <button @click="updatePrice(plane.id, plane.pricePerMinute)" class="save-btn">Zapisz</button>
-            </td>
+            <td>{{ plane.pricePerMinute }} PLN/min</td>
+            <td class="text-right"><button @click="removePlane(plane.id)" class="del-btn">Usuń</button></td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div v-if="activeTab === 'users'" class="table-container">
+      <div class="actions-bar">
+        <button @click="showUserModal = true" class="add-btn">+ Dodaj użytkownika</button>
+      </div>
+      <table>
+        <thead><tr><th>Imię</th><th>Rola</th><th class="text-right">Akcje</th></tr></thead>
+        <tbody>
+          <tr v-for="user in users" :key="user.id">
+            <td>{{ user.name }}</td>
+            <td><span class="reg-tag">{{ user.role }}</span></td>
+            <td class="text-right"><button @click="removeUser(user.id)" class="del-btn">Usuń</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div v-if="showPlaneModal || showUserModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>{{ showPlaneModal ? 'Dodaj nowy statek' : 'Dodaj użytkownika' }}</h3>
+        
+        <template v-if="showPlaneModal">
+          <input v-model="newPlane.model" placeholder="Model statku" />
+          <input v-model="newPlane.registration" placeholder="Znak rej." />
+          <input v-model.number="newPlane.pricePerMinute" type="number" placeholder="Stawka PLN/min" />
+        </template>
+
+        <template v-if="showUserModal">
+          <input v-model="newUser.name" placeholder="Imię użytkownika" />
+          <select v-model="newUser.role" class="custom-select">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+            <option value="pilot">Pilot</option>
+          </select>
+        </template>
+
+        <div class="modal-actions">
+          <button @click="showPlaneModal = false; showUserModal = false" class="cancel-btn">Anuluj</button>
+          <button @click="showPlaneModal ? addPlane() : addUser()" class="save-btn">Zapisz</button>
+        </div>
+      </div>
     </div>
   </main>
 </template>
 
 <style scoped>
-.admin-panel {
-  max-width: 1000px;
-  margin: 50px auto;
-  padding: 0 20px;
-  font-family: sans-serif;
-}
-
-.admin-header {
-  background-color: #1e293b !important;
-  padding: 20px 30px;
-  border-radius: 8px 8px 0 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: white !important; /* Принудительно белый для всей шапки */
-}
-
-.admin-header h1 {
-  color: #ffffff !important;
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.admin-header p {
-  color: #94a3b8 !important;
-  margin: 2px 0 0 0;
-  font-size: 0.85rem;
-}
-
-.header-stats {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.stat-label {
-  color: #cbd5e1 !important; /* Светло-серый текст */
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.stat-value {
-  color: #ffffff !important; /* Чисто белый для цифры */
-  font-weight: 800;
-  font-size: 1.1rem;
-}
-
-/* Таблица */
-.table-container {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 0 0 8px 8px;
-  overflow: hidden;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th {
-  background-color: #f8fafc;
-  padding: 14px 24px;
-  text-align: left;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  color: #64748b;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-td {
-  padding: 12px 24px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #1e293b;
-}
-
-.reg-tag {
-  background: #f1f5f9;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-family: monospace;
-  font-weight: bold;
-  border: 1px solid #cbd5e1;
-}
-
-input[type="number"] {
-  padding: 6px;
-  width: 70px;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-}
-
-.save-btn {
-  background-color: #10b981;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.save-btn:hover {
-  background-color: #059669;
-}
-
+.admin-panel { background-color: rgb(15, 23, 42); min-height: 100vh; padding: 40px 20px; font-family: sans-serif; color: rgb(241, 245, 249); }
+.tabs { display: flex; gap: 10px; margin-bottom: 20px; max-width: 1000px; margin: 0 auto 20px auto; }
+.tabs button { background: rgb(30, 41, 59); color: #94a3b8; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.tabs button.active { background: #3b82f6; color: white; }
+.table-container { background: rgb(30, 41, 59); border-radius: 12px; padding: 30px; max-width: 1000px; margin: 0 auto; }
+.actions-bar { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+table { width: 100%; border-collapse: collapse; }
+td, th { padding: 16px 12px; text-align: left; }
+.reg-tag { background: rgb(51, 65, 85); padding: 4px 8px; border-radius: 4px; font-family: monospace; }
+.add-btn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+.del-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
 .text-right { text-align: right; }
+.modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background: rgb(30, 41, 59); padding: 40px; border-radius: 12px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; }
+.modal-content input, .custom-select { background: rgb(15, 23, 42); border: 1px solid rgb(51, 65, 85); color: white; padding: 12px; border-radius: 6px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 15px; }
+.cancel-btn {  background: #475569; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; }
+.save-btn {margin-left: auto; background: #10b981; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; }
 </style>
