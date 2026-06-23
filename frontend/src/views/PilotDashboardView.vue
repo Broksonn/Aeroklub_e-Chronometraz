@@ -1,22 +1,126 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAirplanesStore } from '@/stores/airplanes'
+import { useAuthStore } from '@/stores/auth'
 import WeatherWidget from '../components/WeatherWidget.vue'
 
 const airplanesStore = useAirplanesStore()
+const authStore = useAuthStore()
+const router = useRouter()
+
 const selectedDate = ref(new Date())
+const reservations = ref<any[]>([])
+
+const generateTimeSlots = () => {
+  const slots = []
+  for (let h = 8; h <= 17; h++) {
+    slots.push(`${h.toString().padStart(2, '0')}:00`)
+    slots.push(`${h.toString().padStart(2, '0')}:30`)
+  }
+  slots.push('18:00')
+  return slots
+}
+
+const timeSlots = generateTimeSlots()
+const selectedStartTime = ref('08:00')
+const selectedEndTime = ref('09:00')
+
+const isAdminOrSuper = computed(() => {
+  return authStore.user?.role === 'admin' || authStore.user?.role === 'superadmin'
+})
+
+const getFormattedDate = (dateObj: Date) => {
+  const year = dateObj.getFullYear()
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0')
+  const day = String(dateObj.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const fetchReservations = async () => {
+  try {
+    const res = await fetch('http://localhost:8080/api/reservations', {
+      headers: { 'Authorization': `Bearer ${authStore.token}` }
+    })
+    if (res.ok) {
+      reservations.value = await res.json()
+    }
+  } catch (err) {
+    console.error('Błąd pobierania rezerwacji', err)
+  }
+}
 
 onMounted(() => {
   airplanesStore.fetchAirplanes()
+  fetchReservations()
 })
 
-const bookFlight = (plane: any) => {
+const isReserved = (planeId: number) => {
+  if (!selectedDate.value) return false
+  const targetDate = getFormattedDate(selectedDate.value)
+  const start = selectedStartTime.value
+  const end = selectedEndTime.value
+
+  return reservations.value.some(r => {
+    return r.airplane_id === planeId &&
+           r.date === targetDate &&
+           start < r.end_time && 
+           end > r.start_time    
+  })
+}
+
+const bookFlight = async (plane: any) => {
   if (!selectedDate.value) {
-    alert('Wybierz najpierw datę lotu z kalendarza!')
+    alert('Wybierz najpierw datę lotu!')
     return
   }
-  const dateString = selectedDate.value.toLocaleDateString('pl-PL')
-  alert(`Zarezerwowano samolot ${plane.model} (${plane.registration}) na dzień ${dateString}.`)
+
+  if (selectedStartTime.value >= selectedEndTime.value) {
+    alert('Czas zakończenia rezerwacji musi być późniejszy niż czas rozpoczęcia!')
+    return
+  }
+
+  // Sprawdzanie wyprzedzenia 30-minutowego
+  const [startHour, startMinute] = selectedStartTime.value.split(':').map(Number)
+  const reservationDateTime = new Date(selectedDate.value)
+  reservationDateTime.setHours(startHour, startMinute, 0, 0)
+
+  const now = new Date()
+  const diffInMinutes = (reservationDateTime.getTime() - now.getTime()) / (1000 * 60)
+
+  if (diffInMinutes < 30) {
+    alert('BŁĄD: Rezerwację należy złożyć z co najmniej 30-minutowym wyprzedzeniem w stosunku do aktualnego czasu! Rezerwacje w przeszłości również są zabronione.')
+    return
+  }
+  
+  const targetDate = getFormattedDate(selectedDate.value)
+
+  try {
+    const response = await fetch('http://localhost:8080/api/reservations', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authStore.token}` 
+      },
+      body: JSON.stringify({
+        airplane_id: plane.id,
+        date: targetDate,
+        start_time: selectedStartTime.value,
+        end_time: selectedEndTime.value
+      })
+    })
+
+    const data = await response.json()
+
+    if (response.ok) {
+      alert(`Sukces: Zarezerwowano ${plane.model} od ${selectedStartTime.value} do ${selectedEndTime.value}`)
+      fetchReservations() 
+    } else {
+      alert(`Błąd z serwera: ${data.error}`)
+    }
+  } catch (err) {
+    alert('Błąd sieci podczas rezerwacji.')
+  }
 }
 </script>
 
@@ -26,21 +130,38 @@ const bookFlight = (plane: any) => {
 
     <section class="calendar-section">
       <div class="calendar-container">
-        <label><strong>Wybierz datę lotu:</strong></label>
+        <label><strong>Wybierz datę i godziny lotu:</strong></label>
         
         <VDatePicker v-model="selectedDate" mode="date" color="blue" :min-date="new Date()">
           <template #default="{ inputValue, inputEvents }">
             <div class="custom-input-wrapper">
-              <input
-                :value="inputValue"
-                v-on="inputEvents"
-                class="modern-input"
-                readonly
-              />
+              <input :value="inputValue" v-on="inputEvents" class="modern-input" readonly />
               <span class="calendar-icon">📅</span>
             </div>
           </template>
         </VDatePicker>
+
+        <div class="time-selectors">
+          <div class="time-group">
+            <label>Od godziny:</label>
+            <select v-model="selectedStartTime" class="time-select">
+              <option v-for="time in timeSlots" :key="time" :value="time" :disabled="time === '18:00'">
+                {{ time }}
+              </option>
+            </select>
+          </div>
+          
+          <span class="time-separator">-</span>
+          
+          <div class="time-group">
+            <label>Do godziny:</label>
+            <select v-model="selectedEndTime" class="time-select">
+              <option v-for="time in timeSlots" :key="time" :value="time" :disabled="time <= selectedStartTime">
+                {{ time }}
+              </option>
+            </select>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -55,17 +176,18 @@ const bookFlight = (plane: any) => {
         
         <div class="plane-body">
           <p class="price">Cena: <strong>{{ plane.pricePerMinute || 0 }} zł / min</strong></p>
-          <p class="status" :class="{ 'unavailable': plane.status !== 'available' }">
-            {{ plane.status === 'available' ? 'Dostępny' : 'W serwisie' }}
-          </p>
+          
+          <p v-if="plane.status !== 'available'" class="status unavailable">W serwisie</p>
+          <p v-else-if="isReserved(plane.id)" class="status reserved">Zajęty w tym czasie</p>
+          <p v-else class="status available">Dostępny do rezerwacji</p>
         </div>
 
         <button 
-          :disabled="plane.status !== 'available'" 
+          :disabled="plane.status !== 'available' || isReserved(plane.id)" 
           @click="bookFlight(plane)"
           class="book-btn"
         >
-          Rezerwuj ten samolot
+          {{ isReserved(plane.id) ? 'Brak wolnych miejsc' : 'Zarezerwuj' }}
         </button>
       </div>
     </section>
@@ -103,6 +225,7 @@ const bookFlight = (plane: any) => {
   gap: 15px;
 }
 
+/* Kalendarz i inputy */
 .custom-input-wrapper {
   position: relative;
   width: 300px; 
@@ -139,6 +262,56 @@ const bookFlight = (plane: any) => {
   line-height: 1;
 }
 
+/* Nowe selektory czasu */
+.time-selectors {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 10px;
+  background: #f8fafc;
+  padding: 15px 25px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.time-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+}
+
+.time-group label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.time-select {
+  padding: 10px 15px;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.time-select:focus {
+  border-color: #3b82f6;
+}
+
+.time-separator {
+  font-weight: bold;
+  color: #94a3b8;
+  font-size: 1.5rem;
+  margin-top: 15px;
+}
+
+/* Siatka samolotów */
 .planes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -183,15 +356,19 @@ const bookFlight = (plane: any) => {
   color: #4b5563;
 }
 
+/* Statusy */
 .status {
   display: inline-block;
   margin-top: 10px;
-  padding: 4px 12px;
+  padding: 6px 12px;
   border-radius: 20px;
-  background-color: #dcfce7;
-  color: #166534;
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+.status.available {
+  background-color: #dcfce7;
+  color: #166534;
 }
 
 .status.unavailable {
@@ -199,6 +376,12 @@ const bookFlight = (plane: any) => {
   color: #991b1b;
 }
 
+.status.reserved {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+/* Przycisk rezerwacji */
 .book-btn {
   width: 100%;
   padding: 12px;
@@ -217,7 +400,9 @@ const bookFlight = (plane: any) => {
 }
 
 .book-btn:disabled {
-  background-color: #d1d5db;
+  background-color: #f1f5f9;
+  color: #9ca3af;
+  border: 1px solid #e2e8f0;
   cursor: not-allowed;
 }
 </style>
