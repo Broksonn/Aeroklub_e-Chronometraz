@@ -8,17 +8,19 @@ const route = useRoute()
 
 const handleLogout = () => {
   auth.logout()
-  router.push('/')
+  router.push('/login')
 }
 </script>
 
 <template>
-  <header v-if="route.path !== '/'">
+  <header v-if="route.path !== '/login' && route.path !== '/'">
     <nav class="navbar">
       <h2>✈️ E-Chronometraż</h2>
       <div class="nav-links">
         <RouterLink v-if="auth.token" to="/pilot">Panel Pilota</RouterLink>
-        <RouterLink v-if="auth.user?.role === 'admin'" to="/admin">Panel Admina</RouterLink>
+        <RouterLink v-if="auth.user?.role === 'admin' || auth.user?.role === 'superadmin'" to="/admin">
+          Panel Admina
+        </RouterLink>
         <a href="#" v-if="auth.token" @click.prevent="handleLogout" class="logout-btn">
           Wyloguj ({{ auth.user?.username }})
         </a>
@@ -52,15 +54,33 @@ header {
 .nav-links {
   display: flex;
   gap: 20px;
+  align-items: center;
 }
 
 .nav-links a {
   color: white;
   text-decoration: none;
   font-weight: bold;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover {
+  color: #93c5fd;
 }
 
 .nav-links a.router-link-exact-active {
   color: #60a5fa; 
+}
+
+.logout-btn {
+  background: rgba(239, 68, 68, 0.2);
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: #fca5a5 !important;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.4);
+  color: white !important;
 }
 </style>

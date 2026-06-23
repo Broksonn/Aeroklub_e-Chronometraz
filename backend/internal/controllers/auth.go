@@ -10,8 +10,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
+// Login obsługuje logowanie użytkowników
 func Login(c *gin.Context) {
 	var creds struct {
 		Username string `json:"username"`
@@ -19,13 +21,20 @@ func Login(c *gin.Context) {
 	}
 
 	if err := c.BindJSON(&creds); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный формат данных"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Nieprawidłowy format danych"})
 		return
 	}
 
 	var user models.User
-	if err := database.DB.Where("username = ? AND password = ?", creds.Username, creds.Password).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный логин или пароль"})
+	// Wyszukujemy tylko po loginie
+	if err := database.DB.Where("username = ?", creds.Username).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nieprawidłowy login lub hasło"})
+		return
+	}
+
+	// Porównujemy hashe haseł
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nieprawidłowy login lub hasło"})
 		return
 	}
 
@@ -38,7 +47,7 @@ func Login(c *gin.Context) {
 
 	tokenString, err := token.SignedString(middleware.JwtKey)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка генерации токена"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Błąd generowania tokenu"})
 		return
 	}
 

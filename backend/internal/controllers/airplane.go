@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Pobiera listę wszystkich samolotów
 func GetAirplanes(c *gin.Context) {
 	var airplanes []models.Airplane
 	database.DB.Find(&airplanes)
@@ -16,13 +17,12 @@ func GetAirplanes(c *gin.Context) {
 	var prices []models.Price
 	database.DB.Find(&prices)
 
-	// Map prices by model type
+	// Mapujemy ceny po modelu
 	priceMap := make(map[string]float64)
 	for _, p := range prices {
 		priceMap[p.Type] = p.PricePerMinute
 	}
 
-	// Create combined response
 	type AirplaneResponse struct {
 		ID             uint    `json:"id"`
 		Model          string  `json:"model"`
@@ -43,4 +43,64 @@ func GetAirplanes(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+// Dodaje nowy samolot
+func CreateAirplane(c *gin.Context) {
+	var input struct {
+		Model        string `json:"model" binding:"required"`
+		Registration string `json:"registration" binding:"required"`
+		Status       string `json:"status" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Wszystkie pola są wymagane"})
+		return
+	}
+
+	airplane := models.Airplane{
+		Model:        input.Model,
+		Registration: input.Registration,
+		Status:       input.Status,
+		PriceID:      1, // Domyślna cena, można dostosować
+	}
+
+	if err := database.DB.Create(&airplane).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Nie udało się dodać samolotu"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, airplane)
+}
+
+// Usuwa samolot
+func DeleteAirplane(c *gin.Context) {
+	id := c.Param("id")
+
+	if err := database.DB.Delete(&models.Airplane{}, id).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Błąd podczas usuwania samolotu"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Samolot usunięty"})
+}
+
+// Aktualizacja samego statusu samolotu
+func UpdateAirplaneStatus(c *gin.Context) {
+	id := c.Param("id")
+	var input struct {
+		Status string `json:"status" binding:"required,oneof=available maintenance"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Nieprawidłowy status"})
+		return
+	}
+
+	if err := database.DB.Model(&models.Airplane{}).Where("id = ?", id).Update("status", input.Status).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Błąd podczas aktualizacji statusu"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Status zaktualizowany"})
 }

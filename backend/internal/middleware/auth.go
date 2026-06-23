@@ -8,21 +8,22 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// Tajny klucz dla JWT (eksportujemy, aby użyć w kontrolerze autoryzacji)
+// Tajny klucz dla JWT
 var JwtKey = []byte("super-secret-uni-key")
 
+// RequireAuth sprawdza token
 func RequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Требуется авторизация"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Wymagana autoryzacja"})
 			c.Abort()
 			return
 		}
 
 		tokenString := strings.Split(authHeader, "Bearer ")
 		if len(tokenString) != 2 {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный формат токена"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Nieprawidłowy format tokenu"})
 			c.Abort()
 			return
 		}
@@ -36,17 +37,31 @@ func RequireAuth() gin.HandlerFunc {
 			c.Set("userRole", claims["role"])
 			c.Next()
 		} else {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Недействительный токен", "details": err.Error()})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Nieważny token", "details": err.Error()})
 			c.Abort()
 		}
 	}
 }
 
+// RequireAdmin pozwala na dostęp adminowi oraz superadminowi
 func RequireAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, exists := c.Get("userRole")
-		if !exists || role != "admin" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Доступ разрешен только администраторам"})
+		if !exists || (role != "admin" && role != "superadmin") {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Dostęp dozwolony tylko dla administratorów"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+// RequireSuperAdmin pozwala na dostęp wyłącznie superadminowi
+func RequireSuperAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, exists := c.Get("userRole")
+		if !exists || role != "superadmin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Dostęp dozwolony tylko dla głównego administratora (SuperAdmin)"})
 			c.Abort()
 			return
 		}
