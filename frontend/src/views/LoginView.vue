@@ -14,7 +14,8 @@ const handleLogin = async () => {
     const success = await auth.login(username.value, password.value)
     
     if (success) {
-      if (auth.user?.role === 'admin') {
+      // Пускаем и admin, и superadmin в панель управления
+      if (auth.user?.role === 'admin' || auth.user?.role === 'superadmin') {
         router.push('/admin')
       } else {
         router.push('/pilot')

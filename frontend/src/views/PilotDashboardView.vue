@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAirplanesStore } from '@/stores/airplanes'
-// 1. IMPORTUJEMY WIDŻET POGODOWY
 import WeatherWidget from '../components/WeatherWidget.vue'
 
 const airplanesStore = useAirplanesStore()
@@ -74,7 +73,6 @@ const bookFlight = (plane: any) => {
 </template>
 
 <style scoped>
-/* Twoje style zostają DOKŁADNIE TAKIE SAME, nie usunąłem ani jednej linijki! */
 .pilot-panel {
   max-width: 1000px;
   margin: 0 auto;

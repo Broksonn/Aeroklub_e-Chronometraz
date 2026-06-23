@@ -17,17 +17,23 @@ func SetupRoutes(router *gin.Engine) {
 	protected := api.Group("/")
 	protected.Use(middleware.RequireAuth())
 	{
-		// Dostępne dla wszystkich (Pilotów i Adminów)
+		// Dostępne dla wszystkich zalogowanych (Pilotów, Adminów, SuperAdminów)
 		protected.GET("/airplanes", controllers.GetAirplanes)
 		protected.GET("/pricing", controllers.GetPrices)
 		protected.GET("/reservations", controllers.GetReservations)
 		protected.POST("/reservations", controllers.CreateReservation)
 
-		// Strefa Administratora
+		// Strefa Administratora (Zarządzanie Flotą ORAZ dodawanie użytkowników)
 		admin := protected.Group("/")
-		admin.Use(middleware.RequireAdmin())
+		admin.Use(middleware.RequireAdmin()) // Puszcza admina i superadmina
 		{
 			admin.PUT("/pricing", controllers.UpdatePrices)
+			admin.POST("/airplanes", controllers.CreateAirplane)
+			admin.DELETE("/airplanes/:id", controllers.DeleteAirplane)
+			// Admin może uderzać w ten endpoint, a wewnątrz kontrolera sprawdzamy rolę
+			admin.POST("/users", controllers.CreateUser)
 		}
+
+		// (Grupa superadmin na razie może zostać pusta, jeśli nie masz innych specyficznych metod tylko dla niego)
 	}
 }
