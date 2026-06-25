@@ -30,6 +30,7 @@ func SetupRoutes(router *gin.Engine) {
 			admin.PUT("/pricing", controllers.UpdatePrices)
 			admin.POST("/airplanes", controllers.CreateAirplane)
 			admin.DELETE("/airplanes/:id", controllers.DeleteAirplane)
+			admin.PATCH("/airplanes/:id/status", controllers.UpdateAirplaneStatus)
 			// Admin może uderzać w ten endpoint, a wewnątrz kontrolera sprawdzamy rolę
 			admin.POST("/users", controllers.CreateUser)
 		}
