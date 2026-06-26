@@ -1,10 +1,19 @@
-## 🛠️ My Contributions (Mateusz Brokos)
+## 👨‍💻 My Role: Frontend Developer
+In this project, I was responsible for the design, implementation, and API integration of the entire client-side (frontend) application layer, focusing on building a responsive, secure, and intuitive interface.
 
-In this collaborative academic project, I was primarily responsible for developing core full-stack features, integration, and deployment automation:
+### 🚀 Key Achievements:
+* **Frontend Architecture (Vue.js 3):** Developed the application's core dynamic views (Pilot Panel and Admin Panel) from scratch using the Composition API.
+* **State Management (Pinia):** Implemented global application state for authentication and asynchronous fetching of aircraft fleet data directly from the Go/REST API backend.
+* **Security & Authentication:** Configured Vue Router Navigation Guards integrated with backend JWT tokens to strictly separate user roles (Admin vs. Pilot) and prevent unauthorized access.
+* **External API Integration:** Developed a dynamic weather widget fetching 7-day airport forecasts asynchronously via the Open-Meteo API.
+* **Reservation Interface:** Created an interactive date selection calendar and a dynamic system for calculating flight minute rates for specific aircraft.
 
-* **Backend Development:** Designed and implemented secure Go (Golang) REST API endpoints using the Gin Web Framework and GORM to handle application logic.
-* **Database & Infrastructure:** Configured PostgreSQL relational database schemas and encapsulated the entire environment using **Docker** and **Docker Compose** for seamless containerized deployment.
-* **Frontend Integration:** Developed dynamic components in Vue 3 (Composition API) with TypeScript, ensuring clean state management via Pinia and robust communication with the backend services.
+### 🛠️ Tech Stack & Tools:
+* **Framework:** Vue.js 3
+* **State Management:** Pinia
+* **Routing:** Vue Router
+* **Languages:** TypeScript / JavaScript, HTML5, CSS3
+* **Communication:** Fetch API (REST integration with Go/PostgreSQL backend)
 
 # ✈️ Aeroklub e-Chronometraż
 
