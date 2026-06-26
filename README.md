@@ -1,5 +1,3 @@
----
-
 ## 🛠️ My Contributions (Mateusz Brokos)
 
 In this collaborative academic project, I was primarily responsible for developing core full-stack features, integration, and deployment automation:
