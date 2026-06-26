@@ -1,3 +1,12 @@
+---
+
+## 🛠️ My Contributions (Mateusz Brokos)
+
+In this collaborative academic project, I was primarily responsible for developing core full-stack features, integration, and deployment automation:
+
+* **Backend Development:** Designed and implemented secure Go (Golang) REST API endpoints using the Gin Web Framework and GORM to handle application logic.
+* **Database & Infrastructure:** Configured PostgreSQL relational database schemas and encapsulated the entire environment using **Docker** and **Docker Compose** for seamless containerized deployment.
+* **Frontend Integration:** Developed dynamic components in Vue 3 (Composition API) with TypeScript, ensuring clean state management via Pinia and robust communication with the backend services.
 
 # ✈️ Aeroklub e-Chronometraż
 
